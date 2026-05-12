@@ -243,7 +243,7 @@
             const [view, setView] = useState('record'); 
             const [isRecording, setIsRecording] = useState(false);
             const [transcript, setTranscript] = useState('');
-            const [stardate, setStardate] = useState("00/00/00");
+            const [stardate, setStardate] = useState("0000/00/00");
             
             // STATES
             const [activeClass, setActiveClass] = useState('PERSONAL');
@@ -266,14 +266,14 @@
                 return () => window.removeEventListener('beforeinstallprompt', handler);
             }, []);
 
-            // Calculate DD/MM/YY Stardate
+            // Calculate YYYY/MM/DD Stardate
             useEffect(() => {
                 const updateStardate = () => {
                     const now = new Date();
-                    const dd = String(now.getDate()).padStart(2, '0');
+                    const yyyy = now.getFullYear();
                     const mm = String(now.getMonth() + 1).padStart(2, '0');
-                    const yy = String(now.getFullYear()).slice(-2);
-                    setStardate(`${dd}/${mm}/${yy}`);
+                    const dd = String(now.getDate()).padStart(2, '0');
+                    setStardate(`${yyyy}/${mm}/${dd}`);
                 };
                 updateStardate();
                 const interval = setInterval(updateStardate, 10000);
@@ -436,16 +436,16 @@
                 setTimePickerData(null);
             };
 
-            // FORCE DD/MM/YY EXPLICIT FORMATTING
+            // FORCE YYYY/MM/DD EXPLICIT FORMATTING
             const formatAlarmDisplay = (isoString) => {
                 if (!isoString) return 'NOT SET';
                 const d = new Date(isoString);
-                const dd = String(d.getDate()).padStart(2, '0');
+                const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const yy = String(d.getFullYear()).slice(-2);
+                const dd = String(d.getDate()).padStart(2, '0');
                 const hh = String(d.getHours()).padStart(2, '0');
                 const min = String(d.getMinutes()).padStart(2, '0');
-                return `${dd}/${mm}/${yy}, ${hh}:${min}`;
+                return `${yyyy}/${mm}/${dd}, ${hh}:${min}`;
             };
 
             const installApp = async () => {
@@ -489,6 +489,11 @@
                                 <div className="modal-header">TEMPORAL SETTINGS</div>
                                 
                                 <div className="slider-row">
+                                    <div className="slider-label"><span>YEAR:</span> <span>{timePickerData.year}</span></div>
+                                    <input type="range" min="2024" max="2030" value={timePickerData.year} onChange={e => setTimePickerData({...timePickerData, year: parseInt(e.target.value)})} />
+                                </div>
+
+                                <div className="slider-row">
                                     <div className="slider-label"><span>MONTH:</span> <span>{String(timePickerData.month).padStart(2, '0')}</span></div>
                                     <input type="range" min="1" max="12" value={timePickerData.month} onChange={e => setTimePickerData({...timePickerData, month: parseInt(e.target.value)})} />
                                 </div>
@@ -496,11 +501,6 @@
                                 <div className="slider-row">
                                     <div className="slider-label"><span>DAY:</span> <span>{String(timePickerData.day).padStart(2, '0')}</span></div>
                                     <input type="range" min="1" max="31" value={timePickerData.day} onChange={e => setTimePickerData({...timePickerData, day: parseInt(e.target.value)})} />
-                                </div>
-
-                                <div className="slider-row">
-                                    <div className="slider-label"><span>YEAR:</span> <span>{timePickerData.year}</span></div>
-                                    <input type="range" min="2024" max="2030" value={timePickerData.year} onChange={e => setTimePickerData({...timePickerData, year: parseInt(e.target.value)})} />
                                 </div>
                                 
                                 <div className="slider-row" style={{marginTop: '10px'}}>
