@@ -266,14 +266,14 @@
                 return () => window.removeEventListener('beforeinstallprompt', handler);
             }, []);
 
-            // Calculate MM/DD/YY Stardate
+            // Calculate DD/MM/YY Stardate
             useEffect(() => {
                 const updateStardate = () => {
                     const now = new Date();
-                    const mm = String(now.getMonth() + 1).padStart(2, '0');
                     const dd = String(now.getDate()).padStart(2, '0');
+                    const mm = String(now.getMonth() + 1).padStart(2, '0');
                     const yy = String(now.getFullYear()).slice(-2);
-                    setStardate(`${mm}/${dd}/${yy}`);
+                    setStardate(`${dd}/${mm}/${yy}`);
                 };
                 updateStardate();
                 const interval = setInterval(updateStardate, 10000);
@@ -436,10 +436,16 @@
                 setTimePickerData(null);
             };
 
+            // FORCE DD/MM/YY EXPLICIT FORMATTING
             const formatAlarmDisplay = (isoString) => {
                 if (!isoString) return 'NOT SET';
                 const d = new Date(isoString);
-                return d.toLocaleString([], { month: 'numeric', day: 'numeric', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yy = String(d.getFullYear()).slice(-2);
+                const hh = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                return `${dd}/${mm}/${yy}, ${hh}:${min}`;
             };
 
             const installApp = async () => {
