@@ -7,6 +7,10 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -15,7 +19,7 @@
         /* LCARS Color Palette & Reset */
         :root { 
             --orange: #ff9900; --pink: #cc99cc; --blue: #9999ff; 
-            --gold: #ffcc66; --red: #cc0000; --dark-blue: #08081a;
+            --gold: #ffcc66; --red: #cc0000; --dark-blue: #08081a; --teal: #33cccc;
             --lcars-bg: #000000;
         }
         
@@ -24,8 +28,8 @@
 
         body { 
             margin: 0; padding: 0; background: var(--lcars-bg); 
-            font-family: 'Arial Narrow', Arial, sans-serif; 
-            font-weight: bold; text-transform: uppercase; color: white; 
+            font-family: 'Oswald', sans-serif; 
+            font-weight: 500; text-transform: uppercase; color: white; 
             overflow: hidden; touch-action: none;
         }
 
@@ -43,14 +47,14 @@
         .elbow-main { 
             width: 100px; height: 100px; background: var(--pink); 
             border-bottom-left-radius: 40px; margin-right: 5px; flex-shrink: 0; 
-            display: flex; align-items: flex-end; justify-content: flex-end; padding: 10px; color: black;
+            display: flex; align-items: flex-end; justify-content: flex-end; padding: 10px; color: black; font-weight: 700;
         }
         .top-bars { flex-grow: 1; display: flex; flex-direction: column; gap: 5px; }
         .bar-top { 
             background: var(--orange); height: 60px; 
             border-bottom-left-radius: 20px; 
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; color: black; font-size: 24px; letter-spacing: 2px;
+            display: flex; align-items: center; justify-content: flex-end;
+            padding: 0 20px; color: black; font-size: 28px; font-weight: 700; letter-spacing: 1px;
         }
         .bar-sub { background: var(--blue); height: 15px; width: 80%; border-bottom-left-radius: 10px; }
 
@@ -60,11 +64,22 @@
         
         .action-btn { 
             height: 45px; border-radius: 0 22px 22px 0; color: black; 
-            font-size: 14px; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; 
-            cursor: pointer; transition: background 0.1s;
+            font-size: 16px; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; 
+            cursor: pointer; transition: background 0.1s; position: relative; overflow: hidden;
+            font-weight: 700;
         }
         .action-btn:active { background: white !important; }
+        .action-text { position: relative; z-index: 2; }
         
+        /* 3-Second Hold Purge Logic */
+        .purge-fill {
+            position: absolute; left: 0; top: 0; height: 100%; background: rgba(255,255,255,0.6);
+            width: 0%; z-index: 1; transition: width 0s; pointer-events: none;
+        }
+        .action-btn.purging .purge-fill {
+            width: 100%; transition: width 3s linear;
+        }
+
         .content-area {
             flex-grow: 1; overflow-y: auto; padding-right: 10px;
             display: flex; flex-direction: column; gap: 15px;
@@ -75,23 +90,45 @@
         /* Log Entry Cards */
         .log-entry {
             background: rgba(153, 153, 255, 0.1);
-            border-left: 4px solid var(--gold);
+            border-left: 6px solid var(--gold); 
             padding: 15px; border-radius: 0 15px 15px 0;
+            display: flex; flex-direction: column;
         }
-        .log-meta { color: var(--gold); font-size: 12px; margin-bottom: 5px; display: flex; justify-content: space-between; }
-        .log-text { color: var(--blue); font-size: 16px; text-transform: none; line-height: 1.4; word-wrap: break-word; }
+        .log-meta { color: var(--gold); font-size: 14px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;}
+        .log-text { color: var(--blue); font-size: 18px; text-transform: none; line-height: 1.4; word-wrap: break-word; font-family: sans-serif;}
 
         .time-display-btn {
-            background: rgba(153, 153, 255, 0.2); border: 1px solid var(--blue); color: white;
-            padding: 5px 10px; border-radius: 10px; cursor: pointer; font-size: 14px; text-transform: uppercase;
+            background: rgba(153, 153, 255, 0.2); border: 1px solid var(--blue); color: white; font-family: 'Oswald', sans-serif;
+            padding: 5px 10px; border-radius: 10px; cursor: pointer; font-size: 14px; text-transform: uppercase; font-weight: 500;
         }
+
+        /* Editing & Classifications */
+        .edit-textarea {
+            width: 100%; min-height: 80px; background: rgba(0,0,0,0.6);
+            border: 1px solid var(--orange); color: white; padding: 10px;
+            font-family: sans-serif; font-size: 16px; text-transform: none; border-radius: 5px;
+            margin-bottom: 10px; outline: none;
+        }
+        .meta-actions span { cursor: pointer; margin-left: 10px; padding: 2px 5px; }
+        .meta-actions span.edit-btn { color: var(--gold); }
+        .meta-actions span.del-btn { color: var(--red); }
 
         /* Recording Interface */
         .record-interface {
             display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
         }
+        
+        .classification-selector {
+            display: flex; gap: 8px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center;
+        }
+        .class-btn {
+            padding: 8px 15px; border-radius: 15px; color: black; cursor: pointer; font-size: 14px; font-weight: 700;
+            opacity: 0.5; transition: all 0.2s; border: 2px solid transparent;
+        }
+        .class-btn.active { opacity: 1; border-color: white; transform: scale(1.05); }
+
         .mic-button {
-            width: 120px; height: 120px; border-radius: 50%;
+            width: 120px; height: 120px; border-radius: 50%; font-family: 'Oswald', sans-serif; font-weight: 700;
             background: var(--red); color: black; font-size: 18px; border: none;
             box-shadow: 0 0 20px rgba(204, 0, 0, 0.5); cursor: pointer;
             display: flex; align-items: center; justify-content: center; text-align: center;
@@ -102,13 +139,13 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
         .transcript-box {
-            margin-top: 20px; width: 100%; min-height: 100px;
+            margin-top: 20px; width: 100%; min-height: 100px; font-family: sans-serif;
             background: rgba(0,0,0,0.5); border: 2px solid var(--orange);
             color: white; padding: 15px; border-radius: 10px; text-transform: none;
         }
 
         /* Bottom Bar */
-        .footer-wrap { background: var(--pink); border-top-left-radius: 20px; display: flex; align-items: center; padding: 0 20px; color: black; justify-content: space-between;}
+        .footer-wrap { background: var(--pink); border-top-left-radius: 20px; display: flex; align-items: center; padding: 0 20px; color: black; justify-content: space-between; font-weight: 700; font-size: 14px;}
 
         /* Modals & Overlays */
         .modal-overlay {
@@ -129,7 +166,7 @@
         
         /* Custom LCARS Sliders */
         .slider-row { display: flex; flex-direction: column; gap: 5px; }
-        .slider-label { color: var(--blue); font-size: 14px; display: flex; justify-content: space-between;}
+        .slider-label { color: var(--blue); font-size: 16px; display: flex; justify-content: space-between;}
         input[type=range] {
             -webkit-appearance: none; width: 100%; height: 20px;
             background: rgba(153, 153, 255, 0.2); border-radius: 10px; outline: none;
@@ -140,14 +177,14 @@
         }
         
         .modal-btn {
-            background: var(--orange); color: black; padding: 12px; border: none;
-            border-radius: 15px; font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase;
+            background: var(--orange); color: black; padding: 12px; border: none; font-family: 'Oswald', sans-serif;
+            border-radius: 15px; font-weight: 700; font-size: 16px; cursor: pointer; text-transform: uppercase;
         }
         .modal-btn.cancel { background: var(--red); }
         .modal-btn.blue { background: var(--blue); }
 
-        .help-text { color: white; font-size: 14px; line-height: 1.5; text-transform: none; }
-        .help-text strong { color: var(--gold); text-transform: uppercase; }
+        .help-text { color: white; font-size: 16px; line-height: 1.5; text-transform: none; font-family: sans-serif;}
+        .help-text strong { color: var(--gold); text-transform: uppercase; font-family: 'Oswald', sans-serif;}
     </style>
 </head>
 <body>
@@ -158,7 +195,6 @@
 
         // --- AUDIO SYNTHESIZER ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
         function playSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
@@ -193,6 +229,14 @@
             recognition.interimResults = true;
         }
 
+        // --- LOG CLASSIFICATION DATA ---
+        const classifications = [
+            { id: 'PERSONAL', color: 'var(--pink)' },
+            { id: 'OFFICIAL', color: 'var(--red)' },
+            { id: 'ENGINEERING', color: 'var(--gold)' },
+            { id: 'MEDICAL', color: 'var(--teal)' }
+        ];
+
         function App() {
             // STATE MANAGEMENT
             const [logs, setLogs] = useState(() => JSON.parse(localStorage.getItem('lcars_logs')) || []);
@@ -201,6 +245,15 @@
             const [transcript, setTranscript] = useState('');
             const [stardate, setStardate] = useState("00/00/00");
             
+            // STATES
+            const [activeClass, setActiveClass] = useState('PERSONAL');
+            const [editingId, setEditingId] = useState(null);
+            const [editText, setEditText] = useState('');
+
+            // HOLD-TO-PURGE STATES
+            const [isPurging, setIsPurging] = useState(false);
+            const purgeTimerRef = useRef(null);
+
             // MODAL STATES
             const [showHelp, setShowHelp] = useState(false);
             const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -232,7 +285,7 @@
                 localStorage.setItem('lcars_logs', JSON.stringify(logs));
             }, [logs]);
 
-            // BACKGROUND ALARM ENGINE (Date & Time)
+            // BACKGROUND ALARM ENGINE
             useEffect(() => {
                 const checkAlarms = setInterval(() => {
                     const now = new Date().getTime();
@@ -241,13 +294,12 @@
                     const updatedLogs = logs.map(log => {
                         if (log.alarm && !log.alarmTriggered) {
                             const alarmTime = new Date(log.alarm).getTime();
-                            // If current time has surpassed alarm time
                             if (now >= alarmTime) {
                                 playSound('red_alert'); 
                                 if (navigator.vibrate) navigator.vibrate([300, 100, 300]); 
                                 if (Notification.permission === "granted" && navigator.serviceWorker.controller) {
                                     navigator.serviceWorker.controller.postMessage({ 
-                                        type: 'SHOW_NOTIFICATION', title: 'COMM INCOMING', body: `Reminder: ${log.text.substring(0, 30)}...`
+                                        type: 'SHOW_NOTIFICATION', title: `COMM: ${log.type}`, body: `Reminder: ${log.text.substring(0, 30)}...`
                                     });
                                 }
                                 dataChanged = true;
@@ -257,7 +309,7 @@
                         return log;
                     });
                     if (dataChanged) setLogs(updatedLogs);
-                }, 10000); // Check every 10 seconds
+                }, 10000); 
                 return () => clearInterval(checkAlarms);
             }, [logs]);
 
@@ -278,7 +330,8 @@
                             date: new Date().toLocaleString(),
                             sd: stardate,
                             alarm: null,
-                            alarmTriggered: false
+                            alarmTriggered: false,
+                            type: activeClass 
                         };
                         setLogs([newLog, ...logs]);
                         setTranscript('');
@@ -310,17 +363,55 @@
                 }
             };
 
+            // LOG DELETION & EDITING
             const deleteLog = (id) => {
                 playSound('click');
                 setLogs(logs.filter(log => log.id !== id));
             }
 
+            const startEditing = (log) => {
+                playSound('click');
+                setEditingId(log.id);
+                setEditText(log.text);
+            };
+
+            const cancelEdit = () => {
+                playSound('click');
+                setEditingId(null);
+                setEditText('');
+            };
+
+            const saveEdit = (id) => {
+                playSound('click');
+                setLogs(logs.map(log => log.id === id ? { ...log, text: editText } : log));
+                setEditingId(null);
+                setEditText('');
+            };
+
+            // 3-SECOND PURGE LOGIC
+            const startPurgeHold = () => {
+                playSound('click');
+                setIsPurging(true);
+                
+                purgeTimerRef.current = setTimeout(() => {
+                    playSound('red_alert');
+                    setLogs([]); 
+                    setIsPurging(false);
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 500]);
+                }, 3000);
+            };
+
+            const stopPurgeHold = () => {
+                setIsPurging(false);
+                clearTimeout(purgeTimerRef.current);
+            };
+
             // CUSTOM DATE/TIME PICKER LOGIC
             const openTimePicker = (log) => {
                 playSound('click');
-                let d = new Date(); // default to now
+                let d = new Date(); 
                 if (log.alarm) {
-                    d = new Date(log.alarm); // open with existing alarm time
+                    d = new Date(log.alarm); 
                 }
                 setTimePickerData({ 
                     id: log.id, 
@@ -334,7 +425,6 @@
 
             const saveTime = () => {
                 playSound('click');
-                // Javascript Date handles overflow gracefully (e.g. Feb 31 becomes Mar 3)
                 const d = new Date(
                     timePickerData.year, 
                     timePickerData.month - 1, 
@@ -342,8 +432,6 @@
                     timePickerData.hour, 
                     timePickerData.minute
                 );
-                
-                // Save as ISO string for reliable parsing
                 setLogs(logs.map(log => log.id === timePickerData.id ? { ...log, alarm: d.toISOString(), alarmTriggered: false } : log));
                 setTimePickerData(null);
             };
@@ -373,9 +461,9 @@
                             <div className="lcars-modal">
                                 <div className="modal-header">SYSTEM PROTOCOLS</div>
                                 <div className="help-text">
-                                    <p><strong>RECORD:</strong> Tap ENGAGE COMM to activate the universal translator and dictate logs.</p>
-                                    <p><strong>DATABASE:</strong> Review personal logs and configure temporal parameters.</p>
-                                    <p><strong>ALARMS:</strong> Set a specific date and time on a log. The system will ping via subspace (OS notifications) when the time is reached.</p>
+                                    <p><strong>RECORD:</strong> Select a classification (Personal, Medical, etc.) and tap ENGAGE COMM to dictate your log.</p>
+                                    <p><strong>DATABASE:</strong> Review logs. Use EDIT to manually correct translation errors or DEL to purge.</p>
+                                    <p><strong>ALARMS:</strong> Set a specific date and time on a log to receive subspace push notifications.</p>
                                 </div>
                                 <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
                                     {deferredPrompt && (
@@ -432,7 +520,6 @@
                         <div className="top-bars">
                             <div className="bar-top">
                                 <span>CAPTAIN'S LOG</span>
-                                <span>SD {stardate}</span>
                             </div>
                             <div className="bar-sub"></div>
                         </div>
@@ -440,16 +527,43 @@
 
                     <div className="middle-wrap">
                         <div className="sidebar">
-                            <div className="action-btn" style={{background: 'var(--orange)'}} onClick={() => { playSound('click'); setView('record'); }}>RECORD</div>
-                            <div className="action-btn" style={{background: 'var(--blue)'}} onClick={() => { playSound('click'); setView('logs'); }}>DATABASE</div>
-                            <div className="action-btn" style={{background: 'var(--pink)'}} onClick={() => { playSound('click'); setShowHelp(true); }}>SYS HELP</div>
+                            <div className="action-btn" style={{background: 'var(--orange)'}} onClick={() => { playSound('click'); setView('record'); }}>
+                                <span className="action-text">RECORD</span>
+                            </div>
+                            <div className="action-btn" style={{background: 'var(--blue)'}} onClick={() => { playSound('click'); setView('logs'); }}>
+                                <span className="action-text">DATABASE</span>
+                            </div>
+                            <div className="action-btn" style={{background: 'var(--pink)'}} onClick={() => { playSound('click'); setShowHelp(true); }}>
+                                <span className="action-text">SYS HELP</span>
+                            </div>
+                            
                             <div style={{flexGrow: 1}}></div>
-                            <div className="action-btn" style={{background: 'var(--red)'}} onClick={() => { playSound('click'); if(confirm('Purge databanks?')) setLogs([]); }}>PURGE</div>
+                            
+                            {/* 3-SECOND HOLD PURGE BUTTON */}
+                            <div className={`action-btn ${isPurging ? 'purging' : ''}`} style={{background: 'var(--red)'}}
+                                 onMouseDown={startPurgeHold} onMouseUp={stopPurgeHold} onMouseLeave={stopPurgeHold}
+                                 onTouchStart={startPurgeHold} onTouchEnd={stopPurgeHold} onContextMenu={(e) => e.preventDefault()}>
+                                <div className="purge-fill"></div>
+                                <span className="action-text">{isPurging ? 'HOLDING...' : 'PURGE'}</span>
+                            </div>
                         </div>
 
                         <div className="content-area">
                             {view === 'record' ? (
                                 <div className="record-interface">
+                                    
+                                    <div style={{color: 'var(--blue)', marginBottom: '10px', fontSize: '14px', fontFamily: 'sans-serif'}}>SELECT CLASSIFICATION:</div>
+                                    <div className="classification-selector">
+                                        {classifications.map(c => (
+                                            <div key={c.id} 
+                                                 className={`class-btn ${activeClass === c.id ? 'active' : ''}`}
+                                                 style={{ background: c.color }}
+                                                 onClick={() => { playSound('click'); setActiveClass(c.id); }}>
+                                                {c.id}
+                                            </div>
+                                        ))}
+                                    </div>
+
                                     <button className={`mic-button ${isRecording ? 'recording' : ''}`} onClick={toggleRecording}>
                                         {isRecording ? "RECORDING... TAP TO SAVE" : "ENGAGE COMM"}
                                     </button>
@@ -460,28 +574,55 @@
                                     )}
                                 </div>
                             ) : (
-                                logs.length === 0 ? <div style={{color: 'var(--blue)'}}>NO LOGS RECORDED.</div> :
-                                logs.map(log => (
-                                    <div key={log.id} className="log-entry">
-                                        <div className="log-meta">
-                                            <span>STARDATE {log.sd}</span>
-                                            <span style={{cursor: 'pointer', color: 'var(--red)'}} onClick={() => deleteLog(log.id)}>DELETE</span>
+                                logs.length === 0 ? <div style={{color: 'var(--blue)', fontFamily: 'sans-serif'}}>NO LOGS RECORDED.</div> :
+                                logs.map(log => {
+                                    const logColor = classifications.find(c => c.id === log.type)?.color || 'var(--pink)';
+                                    
+                                    return (
+                                        <div key={log.id} className="log-entry" style={{ borderLeftColor: logColor }}>
+                                            <div className="log-meta">
+                                                <span>SD {log.sd} // {log.type || 'PERSONAL'}</span>
+                                                <div className="meta-actions">
+                                                    {editingId !== log.id && <span className="edit-btn" onClick={() => startEditing(log)}>EDIT</span>}
+                                                    <span className="del-btn" onClick={() => deleteLog(log.id)}>DEL</span>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* EDIT MODE OR DISPLAY MODE */}
+                                            {editingId === log.id ? (
+                                                <div style={{marginTop: '10px'}}>
+                                                    <textarea 
+                                                        className="edit-textarea" 
+                                                        value={editText} 
+                                                        onChange={e => setEditText(e.target.value)} 
+                                                    />
+                                                    <div style={{display: 'flex', gap: '10px'}}>
+                                                        <button className="time-display-btn" style={{borderColor: 'var(--gold)'}} onClick={() => saveEdit(log.id)}>SAVE</button>
+                                                        <button className="time-display-btn" style={{borderColor: 'var(--red)'}} onClick={cancelEdit}>CANCEL</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="log-text">{log.text}</div>
+                                            )}
+
+                                            {/* ALARM BAR */}
+                                            {editingId !== log.id && (
+                                                <div style={{marginTop: '15px', display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                                    <span style={{fontSize: '14px', color: 'var(--orange)'}}>ALARM:</span>
+                                                    <button className="time-display-btn" onClick={() => openTimePicker(log)}>
+                                                        {formatAlarmDisplay(log.alarm)}
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="log-text">{log.text}</div>
-                                        <div style={{marginTop: '15px', display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                            <span style={{fontSize: '12px', color: 'var(--orange)'}}>ALARM:</span>
-                                            <button className="time-display-btn" onClick={() => openTimePicker(log)}>
-                                                {formatAlarmDisplay(log.alarm)}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                     </div>
 
                     <div className="footer-wrap">
-                        <span>FEDERATION NETWORK OFFLINE</span>
+                        <span>CURRENT STARDATE: {stardate}</span>
                         <span>SYSTEM NOMINAL</span>
                     </div>
                 </div>
