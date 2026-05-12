@@ -81,6 +81,11 @@
         .log-meta { color: var(--gold); font-size: 12px; margin-bottom: 5px; display: flex; justify-content: space-between; }
         .log-text { color: var(--blue); font-size: 16px; text-transform: none; line-height: 1.4; word-wrap: break-word; }
 
+        .time-display-btn {
+            background: rgba(153, 153, 255, 0.2); border: 1px solid var(--blue); color: white;
+            padding: 5px 10px; border-radius: 10px; cursor: pointer; font-size: 14px;
+        }
+
         /* Recording Interface */
         .record-interface {
             display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
@@ -104,6 +109,44 @@
 
         /* Bottom Bar */
         .footer-wrap { background: var(--pink); border-top-left-radius: 20px; display: flex; align-items: center; padding: 0 20px; color: black; justify-content: space-between;}
+
+        /* Modals & Overlays */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center; z-index: 100;
+        }
+        .lcars-modal {
+            background: var(--dark-blue);
+            border: 2px solid var(--blue);
+            border-left: 20px solid var(--gold);
+            border-radius: 15px;
+            padding: 20px; width: 90%; max-width: 400px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+        .modal-header { color: var(--gold); font-size: 22px; border-bottom: 2px solid var(--orange); padding-bottom: 5px; }
+        
+        /* Custom LCARS Sliders */
+        .slider-row { display: flex; flex-direction: column; gap: 5px; }
+        .slider-label { color: var(--blue); font-size: 14px; }
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; height: 20px;
+            background: rgba(153, 153, 255, 0.2); border-radius: 10px; outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 30px; width: 25px;
+            background: var(--gold); border: 2px solid var(--orange); border-radius: 5px; cursor: pointer;
+        }
+        
+        .modal-btn {
+            background: var(--orange); color: black; padding: 12px; border: none;
+            border-radius: 15px; font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase;
+        }
+        .modal-btn.cancel { background: var(--red); }
+        .modal-btn.blue { background: var(--blue); }
+
+        .help-text { color: white; font-size: 14px; line-height: 1.5; text-transform: none; }
+        .help-text strong { color: var(--gold); text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -156,6 +199,21 @@
             const [isRecording, setIsRecording] = useState(false);
             const [transcript, setTranscript] = useState('');
             const [stardate, setStardate] = useState(0);
+            
+            // MODAL STATES
+            const [showHelp, setShowHelp] = useState(false);
+            const [deferredPrompt, setDeferredPrompt] = useState(null);
+            const [timePickerData, setTimePickerData] = useState(null); // { id, hour, minute }
+
+            // PWA Install Prompt Capture
+            useEffect(() => {
+                const handler = (e) => {
+                    e.preventDefault();
+                    setDeferredPrompt(e);
+                };
+                window.addEventListener('beforeinstallprompt', handler);
+                return () => window.removeEventListener('beforeinstallprompt', handler);
+            }, []);
 
             // Calculate mock stardate
             useEffect(() => {
@@ -248,19 +306,92 @@
                 }
             };
 
-            const updateAlarm = (id, time) => {
-                playSound('click');
-                setLogs(logs.map(log => log.id === id ? { ...log, alarm: time, alarmTriggered: false } : log));
-            };
-
             const deleteLog = (id) => {
                 playSound('click');
                 setLogs(logs.filter(log => log.id !== id));
             }
 
+            // CUSTOM TIME PICKER LOGIC
+            const openTimePicker = (log) => {
+                playSound('click');
+                let h = 12; let m = 0;
+                if (log.alarm) {
+                    const parts = log.alarm.split(':');
+                    h = parseInt(parts[0], 10);
+                    m = parseInt(parts[1], 10);
+                } else {
+                    const d = new Date();
+                    h = d.getHours();
+                    m = d.getMinutes();
+                }
+                setTimePickerData({ id: log.id, hour: h, minute: m });
+            };
+
+            const saveTime = () => {
+                playSound('click');
+                const formattedTime = `${String(timePickerData.hour).padStart(2, '0')}:${String(timePickerData.minute).padStart(2, '0')}`;
+                setLogs(logs.map(log => log.id === timePickerData.id ? { ...log, alarm: formattedTime, alarmTriggered: false } : log));
+                setTimePickerData(null);
+            };
+
+            const installApp = async () => {
+                playSound('click');
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') setDeferredPrompt(null);
+                }
+            };
+
             // UI RENDERING
             return (
                 <div className="lcars-container">
+                    
+                    {/* HELP MODAL */}
+                    {showHelp && (
+                        <div className="modal-overlay">
+                            <div className="lcars-modal">
+                                <div className="modal-header">SYSTEM PROTOCOLS</div>
+                                <div className="help-text">
+                                    <p><strong>RECORD:</strong> Tap ENGAGE COMM to activate the universal translator and dictate logs.</p>
+                                    <p><strong>DATABASE:</strong> Review personal logs and configure temporal parameters.</p>
+                                    <p><strong>ALARMS:</strong> Set a specific time on a log. The system will ping via subspace (OS notifications) when the time is reached.</p>
+                                </div>
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
+                                    {deferredPrompt && (
+                                        <button className="modal-btn blue" onClick={installApp}>INSTALL PWA TO DEVICE</button>
+                                    )}
+                                    <button className="modal-btn blue" onClick={() => { playSound('click'); Notification.requestPermission(); }}>ENABLE NOTIFICATIONS</button>
+                                    <button className="modal-btn cancel" onClick={() => { playSound('click'); setShowHelp(false); }}>CLOSE TERMINAL</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TIME PICKER MODAL */}
+                    {timePickerData && (
+                        <div className="modal-overlay">
+                            <div className="lcars-modal">
+                                <div className="modal-header">TEMPORAL SETTINGS</div>
+                                
+                                <div className="slider-row">
+                                    <div className="slider-label">HOUR: {String(timePickerData.hour).padStart(2, '0')}</div>
+                                    <input type="range" min="0" max="23" value={timePickerData.hour} onChange={e => setTimePickerData({...timePickerData, hour: parseInt(e.target.value)})} />
+                                </div>
+                                
+                                <div className="slider-row">
+                                    <div className="slider-label">MINUTE: {String(timePickerData.minute).padStart(2, '0')}</div>
+                                    <input type="range" min="0" max="59" value={timePickerData.minute} onChange={e => setTimePickerData({...timePickerData, minute: parseInt(e.target.value)})} />
+                                </div>
+
+                                <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                                    <button className="modal-btn" style={{flex: 1}} onClick={saveTime}>ENGAGE</button>
+                                    <button className="modal-btn cancel" style={{flex: 1}} onClick={() => { playSound('click'); setTimePickerData(null); }}>CANCEL</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="header-wrap">
                         <div className="elbow-main">01</div>
                         <div className="top-bars">
@@ -276,7 +407,7 @@
                         <div className="sidebar">
                             <div className="action-btn" style={{background: 'var(--orange)'}} onClick={() => { playSound('click'); setView('record'); }}>RECORD</div>
                             <div className="action-btn" style={{background: 'var(--blue)'}} onClick={() => { playSound('click'); setView('logs'); }}>DATABASE</div>
-                            <div className="action-btn" style={{background: 'var(--pink)'}} onClick={() => { playSound('click'); Notification.requestPermission(); }}>COMMS SYNC</div>
+                            <div className="action-btn" style={{background: 'var(--pink)'}} onClick={() => { playSound('click'); setShowHelp(true); }}>SYS HELP</div>
                             <div style={{flexGrow: 1}}></div>
                             <div className="action-btn" style={{background: 'var(--red)'}} onClick={() => { playSound('click'); if(confirm('Purge databanks?')) setLogs([]); }}>PURGE</div>
                         </div>
@@ -302,14 +433,11 @@
                                             <span style={{cursor: 'pointer', color: 'var(--red)'}} onClick={() => deleteLog(log.id)}>DELETE</span>
                                         </div>
                                         <div className="log-text">{log.text}</div>
-                                        <div style={{marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                            <span style={{fontSize: '10px', color: 'var(--orange)'}}>SET REMINDER:</span>
-                                            <input 
-                                                type="time" 
-                                                value={log.alarm || ''} 
-                                                onChange={(e) => updateAlarm(log.id, e.target.value)}
-                                                style={{background: 'transparent', border: '1px solid var(--blue)', color: 'white', padding: '2px', borderRadius: '4px'}}
-                                            />
+                                        <div style={{marginTop: '15px', display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                            <span style={{fontSize: '12px', color: 'var(--orange)'}}>ALARM:</span>
+                                            <button className="time-display-btn" onClick={() => openTimePicker(log)}>
+                                                {log.alarm ? log.alarm : 'NOT SET'}
+                                            </button>
                                         </div>
                                     </div>
                                 ))
